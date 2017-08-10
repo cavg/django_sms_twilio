@@ -1,0 +1,6 @@
+include LICENSE
+include README.rst
+include requirements.txt
+recursive-include sms_twilio/migrations *
+recursive-include sms_twilio/templates *
+recursive-include sms_twilio/docs *
