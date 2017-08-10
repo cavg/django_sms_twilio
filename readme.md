@@ -1,5 +1,7 @@
 Django APP that provide an integration with twilio SMS service.
 
+Tested on Django 1.11.2 and Python 3.6.1 \o/
+
 # Features
 
 * SMS sender through Twilio API

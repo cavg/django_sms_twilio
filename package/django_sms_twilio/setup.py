@@ -19,7 +19,7 @@ setup(
     license='BSD License',
     description='A Django app ',
     long_description=README,
-    url='https://www.example.com/',
+    url='https://github.com/cavg/django_sms_twilio',
     author='Camilo Verdugo',
     author_email='camilo.verdugo@gmail.com',
     classifiers=[
