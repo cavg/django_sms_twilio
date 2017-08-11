@@ -20,11 +20,11 @@ Tested on Django 1.11.2 and Python 3.6.1 \o/
 
 ## URL and settings
 
-    url(r'^sms_twilio/', include('sms_twilio.urls')),
+    url(r'^sms/', include('sms.urls')),
 
     INSTALLED_APPS = [
         ...
-        'sms_twilio',
+        'sms.apps.SmsConfig',
     ]
 
 ## Notes:
