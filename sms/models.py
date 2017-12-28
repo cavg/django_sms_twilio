@@ -10,6 +10,9 @@ import datetime
 class ConfigSMS(models.Model):
     max_month =  models.IntegerField(blank=False, null=False, default = settings.DEFAULT_SMS_LIMIT_BY_DAY) # Negative value means no limit
     max_day =  models.IntegerField(blank=False, null=False, default = settings.DEFAULT_SMS_LIMIT_BY_MONTH) # Negative value means no limit
+    account_sid = models.CharField(max_length=50, blank=False, null=False, default=settings.TWILIO_ACCOUNT_SID)
+    account_token = models.CharField(max_length=50, blank=False, null=False, default=settings.TWILIO_AUTH_TOKEN)
+    default_number = models.CharField(max_length=20, blank=False, null=False, default=settings.TWILIO_NUMBER)
 
     user = models.OneToOneField(User, on_delete=models.CASCADE) #OneToOneField ensure unique user
 
@@ -29,48 +32,42 @@ class ConfigSMS(models.Model):
 
 
 class SMS(models.Model):
-    body = models.CharField(blank=False, max_length=255)
-    number_from = models.CharField(blank=False, max_length=15, default=settings.TWILIO_NUMBER)
-    number_to = models.CharField(blank=False, max_length=15)
-    status = models.CharField(blank=True, max_length=500)
-    sid = models.CharField(blank=True, max_length=50)
+    body = models.CharField(max_length=255, blank=False, null=False)
+    number_from = models.CharField(max_length=15, blank=False, null=False)
+    number_to = models.CharField(max_length=15, blank=False, null=False)
+    status = models.CharField(max_length=500, blank=True, null=False)
+    sid = models.CharField(max_length=50, blank=True, null=False)
 
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, default=None, blank=False, null=False)
+    config = models.ForeignKey(ConfigSMS, on_delete=models.CASCADE, blank=False, null=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
-
 
     def __str__(self):
         return "SMS: {}, TO:{}, STATUS:{}".format(self.body, self.number_to, self.status)
 
     def _check_quota(self):
-        configSms = ConfigSMS.objects.filter(user=self.sender)
-        if (configSms.count() == 0):
-            return False, "El usuario no está habilitado para enviar SMS"
+        if self.config.is_unlimited():
+            return True, None
         else:
-            configSms = configSms.first()
-            if configSms.is_unlimited():
-                return True, None
-            else:
-                dt = datetime.datetime.now()
-                count_by_day = SMS.objects.filter(sender=self.sender, created_at__year=dt.year, created_at__month=dt.month, created_at__day=dt.day).count()
-                count_by_month = SMS.objects.filter(sender=self.sender, created_at__year=dt.year, created_at__month=dt.month).count()
-                msg = "El usuario ha llegado a su máximo de SMS diarios ({}) y/o mensuales ({})".format(configSms.max_day, configSms.max_month)
+            dt = datetime.datetime.now()
+            count_by_day = SMS.objects.filter(config=self.config, created_at__year=dt.year, created_at__month=dt.month, created_at__day=dt.day).count()
+            count_by_month = SMS.objects.filter(config=self.config, created_at__year=dt.year, created_at__month=dt.month).count()
+            msg = "El usuario ha llegado a su máximo de SMS diarios ({}) y/o mensuales ({})".format(self.config.max_day, self.config.max_month)
 
-                if count_by_day <= configSms.max_day:
-                    if count_by_month <= configSms.max_month:
-                        return True, None
-                    else:
-                        return False, msg
+            if count_by_day <= self.config.max_day:
+                if count_by_month <= self.config.max_month:
+                    return True, None
                 else:
                     return False, msg
+            else:
+                return False, msg
 
     def send(self):
         if settings.ENABLE_SMS:
             with_quotes, detail = self._check_quota()
             if with_quotes:
-                client = Client()
+                client = Client(self.config.account_sid, self.config.account_token)
                 message = None
                 if settings.DEBUG:
                     message = client.messages.create(

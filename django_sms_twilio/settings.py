@@ -130,14 +130,16 @@ STATIC_URL = '/static/'
 
 # Twilio
 TWILIO_NUMBER = os.environ.get('TWILIO_NUMBER')
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+TWILIO_TEST_NUMBER_TO = os.environ.get('TWILIO_TEST_NUMBER_TO')
+
 ENABLE_SMS = False
 if not DEBUG:
     ENABLE_SMS = True
 
 DEFAULT_SMS_LIMIT_BY_DAY = 2
 DEFAULT_SMS_LIMIT_BY_MONTH = 2
-DETAULT_SMS_TEST_NUMBER = os.environ.get('TWILIO_TEST_TO_NUMBER', None)
-
 
 SITE_URL = 'http://{}'.format(ALLOWED_HOSTS[0])
 

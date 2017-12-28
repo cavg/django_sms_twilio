@@ -9,7 +9,7 @@ class ConfigSMSTestCase(TestCase):
     def setUp(self):
         pass
 
-    def test_automatic_create_config_sms(self):
+    def test_automatic_create_quota(self):
         config_sms = ConfigSMS.objects.filter().count()
         self.assertEqual(config_sms,0)
 
@@ -20,7 +20,8 @@ class ConfigSMSTestCase(TestCase):
             username = "agent@empresa.cl"
         )
 
-        config_sms = ConfigSMS.objects.get(user=user)
+        config_sms = ConfigSMS.objects.filter(user = user).first()
+
         self.assertEqual(config_sms.user,user)
         self.assertEqual(config_sms.max_month, settings.DEFAULT_SMS_LIMIT_BY_MONTH)
         self.assertEqual(config_sms.max_day, settings.DEFAULT_SMS_LIMIT_BY_DAY)
@@ -43,31 +44,21 @@ class SMSTestCase(TestCase):
             email = "agent@empresa.cl",
             username = "agent@empresa.cl"
         )
-        config_sms = ConfigSMS.objects.get(user=user)
-
-        # Testing user sms disabled (no exist ConfigSMS)
-        config_sms.delete()
+        config_sms = ConfigSMS.objects.filter(user = user).first()
         sms = SMS.objects.create(
             body = "msg",
+            number_from = config_sms.default_number,
             number_to = "+569234234",
-            sender = user
+            config = config_sms
         )
-        status, msg = sms._check_quota()
-        self.assertEqual(status, False)
-        self.assertEqual(msg, "El usuario no está habilitado para enviar SMS")
-
-        # Testing user without limit
-        config_sms = ConfigSMS.objects.create(
-            user = user
-        )
-        config_sms.set_no_limit()
         status, msg = sms._check_quota()
         self.assertEqual(status, True)
         self.assertEqual(msg, None)
+        config_sms.set_no_limit()
         self.assertEqual(config_sms.is_unlimited(), True)
 
         # Testing user below limit
-        self.assertEqual(SMS.objects.filter(sender=user).count(), 1)
+        self.assertEqual(SMS.objects.filter().count(), 1)
         config_sms.max_day = 1
         config_sms.max_month = 2
         config_sms.save()
@@ -80,10 +71,11 @@ class SMSTestCase(TestCase):
         self.assertEqual(config_sms.max_day, 1)
         SMS.objects.create(
             body = "msg",
+            number_from = config_sms.default_number,
             number_to = "+569234234",
-            sender = user
+            config = config_sms
         )
-        self.assertEqual(SMS.objects.filter(sender=user).count(), 2)
+        self.assertEqual(SMS.objects.filter().count(), 2)
         status, msg = sms._check_quota()
         self.assertEqual(status, False)
         self.assertEqual(msg, "El usuario ha llegado a su máximo de SMS diarios ({}) y/o mensuales ({})".format(config_sms.max_day, config_sms.max_month))
@@ -95,12 +87,14 @@ class SMSTestCase(TestCase):
             email = "agent@empresa.cl",
             username = "agent@empresa.cl"
         )
+        config_sms = ConfigSMS.objects.filter(user = user).first()
 
-        if settings.DETAULT_SMS_TEST_NUMBER is not None:
+        if settings.TWILIO_TEST_NUMBER_TO is not None:
             sms = SMS.objects.create(
                 body = "msg",
-                number_to = settings.DETAULT_SMS_TEST_NUMBER,
-                sender = user
+                number_from = config_sms.default_number,
+                number_to = settings.TWILIO_TEST_NUMBER_TO,
+                config = config_sms
             )
 
             # Testing delivery disabled by setting
