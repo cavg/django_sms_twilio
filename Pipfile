@@ -1,0 +1,19 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+django = "==1.11.2"
+django-extensions = "==1.7.9"
+twilio = "==6.5.0"
+coverage = "==4.4.1"
+django-debug-toolbar = "*"
+ipdb = "==0.10.3"
+
+
+[dev-packages]
+
