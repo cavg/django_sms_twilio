@@ -2,16 +2,16 @@ from django.test import TestCase
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from .models import Quota, SMS
+from .models import ConfigSMS, SMS
 
-class QuotaTestCase(TestCase):
+class ConfigSMSTestCase(TestCase):
 
     def setUp(self):
         pass
 
-    def test_automatic_create_quota(self):
-        quota = Quota.objects.filter().count()
-        self.assertEqual(quota,0)
+    def test_automatic_create_config_sms(self):
+        config_sms = ConfigSMS.objects.filter().count()
+        self.assertEqual(config_sms,0)
 
         user = User.objects.create(
             first_name = "User1322",
@@ -20,15 +20,15 @@ class QuotaTestCase(TestCase):
             username = "agent@empresa.cl"
         )
 
-        quota = Quota.objects.get(user=user)
-        self.assertEqual(quota.user,user)
-        self.assertEqual(quota.max_month, settings.DEFAULT_SMS_LIMIT_BY_MONTH)
-        self.assertEqual(quota.max_day, settings.DEFAULT_SMS_LIMIT_BY_DAY)
+        config_sms = ConfigSMS.objects.get(user=user)
+        self.assertEqual(config_sms.user,user)
+        self.assertEqual(config_sms.max_month, settings.DEFAULT_SMS_LIMIT_BY_MONTH)
+        self.assertEqual(config_sms.max_day, settings.DEFAULT_SMS_LIMIT_BY_DAY)
 
-        quota.set_no_limit()
-        self.assertEqual(quota.max_month, -1)
-        self.assertEqual(quota.max_day, -1)
-        self.assertEqual(quota.is_unlimited(), True)
+        config_sms.set_no_limit()
+        self.assertEqual(config_sms.max_month, -1)
+        self.assertEqual(config_sms.max_day, -1)
+        self.assertEqual(config_sms.is_unlimited(), True)
 
 
 class SMSTestCase(TestCase):
@@ -43,10 +43,10 @@ class SMSTestCase(TestCase):
             email = "agent@empresa.cl",
             username = "agent@empresa.cl"
         )
-        quota = Quota.objects.get(user=user)
+        config_sms = ConfigSMS.objects.get(user=user)
 
-        # Testing user sms disabled (no exist Quota)
-        quota.delete()
+        # Testing user sms disabled (no exist ConfigSMS)
+        config_sms.delete()
         sms = SMS.objects.create(
             body = "msg",
             number_to = "+569234234",
@@ -57,27 +57,27 @@ class SMSTestCase(TestCase):
         self.assertEqual(msg, "El usuario no está habilitado para enviar SMS")
 
         # Testing user without limit
-        quota = Quota.objects.create(
+        config_sms = ConfigSMS.objects.create(
             user = user
         )
-        quota.set_no_limit()
+        config_sms.set_no_limit()
         status, msg = sms._check_quota()
         self.assertEqual(status, True)
         self.assertEqual(msg, None)
-        self.assertEqual(quota.is_unlimited(), True)
+        self.assertEqual(config_sms.is_unlimited(), True)
 
         # Testing user below limit
         self.assertEqual(SMS.objects.filter(sender=user).count(), 1)
-        quota.max_day = 1
-        quota.max_month = 2
-        quota.save()
-        self.assertEqual(quota.is_unlimited(), False)
+        config_sms.max_day = 1
+        config_sms.max_month = 2
+        config_sms.save()
+        self.assertEqual(config_sms.is_unlimited(), False)
         status, msg = sms._check_quota()
         self.assertEqual(status, True)
         self.assertEqual(msg, None)
 
         # Testing user reach limit by day
-        self.assertEqual(quota.max_day, 1)
+        self.assertEqual(config_sms.max_day, 1)
         SMS.objects.create(
             body = "msg",
             number_to = "+569234234",
@@ -86,7 +86,7 @@ class SMSTestCase(TestCase):
         self.assertEqual(SMS.objects.filter(sender=user).count(), 2)
         status, msg = sms._check_quota()
         self.assertEqual(status, False)
-        self.assertEqual(msg, "El usuario ha llegado a su máximo de SMS diarios ({}) y/o mensuales ({})".format(quota.max_day, quota.max_month))
+        self.assertEqual(msg, "El usuario ha llegado a su máximo de SMS diarios ({}) y/o mensuales ({})".format(config_sms.max_day, config_sms.max_month))
 
     def test_send(self):
         user = User.objects.create(
@@ -111,8 +111,8 @@ class SMSTestCase(TestCase):
                 self.assertEqual(msg, "Delivery disabled by setting.ENABLE_SMS flag")
 
             # Testing send
-            quota = Quota.objects.get(user=user)
-            quota.set_no_limit()
+            config_sms = ConfigSMS.objects.get(user=user)
+            config_sms.set_no_limit()
             with self.settings(ENABLE_SMS=True):
                 with self.settings(DEBUG=True):
                     status, msg = sms.send()

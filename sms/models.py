@@ -7,7 +7,7 @@ from twilio.rest import Client
 import datetime
 
 
-class Quota(models.Model):
+class ConfigSMS(models.Model):
     max_month =  models.IntegerField(blank=False, null=False, default = settings.DEFAULT_SMS_LIMIT_BY_DAY) # Negative value means no limit
     max_day =  models.IntegerField(blank=False, null=False, default = settings.DEFAULT_SMS_LIMIT_BY_MONTH) # Negative value means no limit
 
@@ -45,21 +45,21 @@ class SMS(models.Model):
         return "SMS: {}, TO:{}, STATUS:{}".format(self.body, self.number_to, self.status)
 
     def _check_quota(self):
-        quota = Quota.objects.filter(user=self.sender)
-        if (quota.count() == 0):
+        configSms = ConfigSMS.objects.filter(user=self.sender)
+        if (configSms.count() == 0):
             return False, "El usuario no está habilitado para enviar SMS"
         else:
-            quota = quota.first()
-            if quota.is_unlimited():
+            configSms = configSms.first()
+            if configSms.is_unlimited():
                 return True, None
             else:
                 dt = datetime.datetime.now()
                 count_by_day = SMS.objects.filter(sender=self.sender, created_at__year=dt.year, created_at__month=dt.month, created_at__day=dt.day).count()
                 count_by_month = SMS.objects.filter(sender=self.sender, created_at__year=dt.year, created_at__month=dt.month).count()
-                msg = "El usuario ha llegado a su máximo de SMS diarios ({}) y/o mensuales ({})".format(quota.max_day, quota.max_month)
+                msg = "El usuario ha llegado a su máximo de SMS diarios ({}) y/o mensuales ({})".format(configSms.max_day, configSms.max_month)
 
-                if count_by_day <= quota.max_day:
-                    if count_by_month <= quota.max_month:
+                if count_by_day <= configSms.max_day:
+                    if count_by_month <= configSms.max_month:
                         return True, None
                     else:
                         return False, msg

@@ -16,6 +16,7 @@ Tested on Django 1.11.2 and Python 3.6.1 \o/
     TWILIO_ACCOUNT_SID
     TWILIO_AUTH_TOKEN
     TWILIO_NUMBER
+    TWILIO_TEST_TO_NUMBER
 
 ## Required settings
 
@@ -37,6 +38,13 @@ SITE_URL = "."...
 
 In debug mode, SMS are not sent using twilio to avoid charges.
 
+
+## Changelog
+
+#### 0.0.3
+* to delivery use sms.send() will check the quote limit automatically
+* method check_quota was deprecated
+* unlimit quote is valid if max_day or max_month are negative
 
 # Dependencies
 
