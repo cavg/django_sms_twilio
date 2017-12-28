@@ -25,7 +25,7 @@ SECRET_KEY = '*o%%-)-9g40_=)hyya8o0smw_*(q8j_zeu31c&^(z&!dp5_xws'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
 
 
 # Application definition
@@ -133,3 +133,12 @@ TWILIO_NUMBER = os.environ.get('TWILIO_NUMBER')
 ENABLE_SMS = False
 if not DEBUG:
     ENABLE_SMS = True
+
+DEFAULT_SMS_LIMIT_BY_DAY = 2
+DEFAULT_SMS_LIMIT_BY_MONTH = 2
+DETAULT_SMS_TEST_NUMBER = os.environ.get('TWILIO_TEST_TO_NUMBER', None)
+
+
+SITE_URL = 'http://{}'.format(ALLOWED_HOSTS[0])
+
+

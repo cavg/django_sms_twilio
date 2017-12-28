@@ -17,6 +17,12 @@ Tested on Django 1.11.2 and Python 3.6.1 \o/
     TWILIO_AUTH_TOKEN
     TWILIO_NUMBER
 
+## Required settings
+
+DEFAULT_SMS_LIMIT_BY_DAY = 2
+DEFAULT_SMS_LIMIT_BY_MONTH = 2
+SITE_URL = "."...
+
 
 ## URL and settings
 
@@ -32,9 +38,6 @@ Tested on Django 1.11.2 and Python 3.6.1 \o/
 In debug mode, SMS are not sent using twilio to avoid charges.
 
 
+# Dependencies
 
-# Install instructions
-
-`pip3 install -r package/django_sms_twilio/requirements.txt`
-
-`sh install.sh`
+`pipenv install`
