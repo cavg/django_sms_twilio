@@ -1,6 +1,7 @@
 include LICENSE
 include README.md
 include requirements.txt
-recursive-include sms_twilio/migrations *
-recursive-include sms_twilio/templates *
-recursive-include sms_twilio/docs *
+recursive-include sms/dependencies *
+recursive-include sms/migrations *
+recursive-include sms/templates *
+recursive-include sms/docs *

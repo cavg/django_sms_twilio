@@ -115,7 +115,95 @@ class SMSTestCase(TestCase):
                     self.assertEqual(status, True)
 
 
+    def test_build(self):
+        user = User.objects.create(
+            first_name = "User1322",
+            last_name = "Recolector",
+            email = "agent@empresa.cl",
+            username = "agent@empresa.cl"
+        )
+        config_sms = ConfigSMS.objects.filter(user = user).first()
 
+        def populate_body(_class = None, body = '', extra_filters = [], **populate_values):
+            return body, [], []
 
+        number_from = "+5691234234"
+        number_to = "+569324234"
+        body = "Hello customer this is a SMS"
+        sms_fields = {
+            'number_from':number_from,
+            'number_to':number_to,
+            'body': body,
+            'config':config_sms
+        }
+        body_args = {
+            'user':user
+        }
+        sms, nf_keys, nf_args = SMS.build(
+            SMS,
+            None,
+            [],
+            sms_fields,
+            body_args,
+            populate_body
+        )
+        self.assertEqual(type(sms), SMS)
+        self.assertEqual(sms.body, body)
+        self.assertEqual(nf_args, [])
+        self.assertEqual(nf_keys, [])
+
+        # Test build with error in keys
+        def populate_body(_class = None, body = '', extra_filters = [], **populate_values):
+            return body, ['KEY'], []
+        sms, nf_keys, nf_args = SMS.build(
+            SMS,
+            None,
+            [],
+            sms_fields,
+            body_args,
+            populate_body
+        )
+        self.assertEqual(type(sms), SMS)
+        self.assertEqual(sms.body, body)
+        self.assertEqual(nf_args, [])
+        self.assertEqual(nf_keys, ['KEY'])
+        self.assertEqual(sms.error_code, SMS.ERROR_KEYS)
+        self.assertEqual(sms.error_detail, 'KEY')
+
+        # Test build with error in args
+        def populate_body(_class = None, body = '', extra_filters = [], **populate_values):
+            return body, [], ['var']
+        sms, nf_keys, nf_args = SMS.build(
+            SMS,
+            None,
+            [],
+            sms_fields,
+            body_args,
+            populate_body
+        )
+        self.assertEqual(type(sms), SMS)
+        self.assertEqual(sms.body, body)
+        self.assertEqual(nf_args, ['var'])
+        self.assertEqual(nf_keys, [])
+        self.assertEqual(sms.error_code, SMS.ERROR_POPULATE)
+        self.assertEqual(sms.error_detail, 'var')
+
+        # Test build with error args and keys
+        def populate_body(_class = None, body = '', extra_filters = [], **populate_values):
+            return body, ['KEY'], ['var']
+        sms, nf_keys, nf_args = SMS.build(
+            SMS,
+            None,
+            [],
+            sms_fields,
+            body_args,
+            populate_body
+        )
+        self.assertEqual(type(sms), SMS)
+        self.assertEqual(sms.body, body)
+        self.assertEqual(nf_args, ['var'])
+        self.assertEqual(nf_keys, ['KEY'])
+        self.assertEqual(sms.error_code, SMS.ERROR_POPULATE_KEYS)
+        self.assertEqual(sms.error_detail, 'var,KEY')
 
 

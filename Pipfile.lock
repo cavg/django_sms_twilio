@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1a7e76076b3965e703314f14b1b735c867a8a04d1b59f25d378921bd6c8d120d"
+            "sha256": "9c6a362b30c8accf6ce883ae82308d5d0e9e6b221de4a3ebab48fc61b1a9009f"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -27,6 +27,9 @@
         ]
     },
     "default": {
+        "49bbba5": {
+            "path": "./sms/dependencies/django_toolbox-0.3.1.tar.gz"
+        },
         "appnope": {
             "hashes": [
                 "sha256:5b26757dc6f79a3b7dc9fab95359328d5747fcb2409d331ea66d0272b90ab2a0",

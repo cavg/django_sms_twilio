@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
 
+from toolbox.html_parser import MyHTMLParser
 from twilio.rest import Client
 
 import datetime
@@ -32,11 +33,23 @@ class ConfigSMS(models.Model):
 
 
 class SMS(models.Model):
-    body = models.CharField(max_length=255, blank=False, null=False)
+    ERROR_POPULATE = 1
+    ERROR_KEYS = 2
+    ERROR_POPULATE_KEYS = 3
+    ERROR_SMS = 4
+    ERROR_CODE_CHOICES = (
+        (ERROR_POPULATE, 'Error en datos de reemplazos'),
+        (ERROR_KEYS, 'Error en valores de reemplazos'),
+        (ERROR_POPULATE_KEYS, 'Error en valores de reemplazos y datos'),
+        (ERROR_SMS, 'Error servicio de envió de sms')
+    )
+    body = models.TextField(max_length=1600, blank=False, null=False)
     number_from = models.CharField(max_length=15, blank=False, null=False)
     number_to = models.CharField(max_length=15, blank=False, null=False)
     status = models.CharField(max_length=500, blank=True, null=False)
     sid = models.CharField(max_length=50, blank=True, null=False)
+    error_code = models.IntegerField(choices=ERROR_CODE_CHOICES, default=None, null=True, blank=True)
+    error_detail = models.CharField(max_length=200, blank = True, null = True)
 
     config = models.ForeignKey(ConfigSMS, on_delete=models.CASCADE, blank=False, null=False)
 
@@ -62,6 +75,59 @@ class SMS(models.Model):
                     return False, msg
             else:
                 return False, msg
+
+    """ Replace template body tags for values an create an instance of Mail
+    Args:
+        sms_class (Class): Could be parent of SMS
+        entity_class (Class): Could be parent of MailTemplateEntity
+        extra_filters (array<Q>): using to filter entity_class
+        sms_fields (dict): All args required to obtain values to replace in sms body
+        populate_values (dict): All args required to obtain values to replace in sms body
+        populate_body: (Method) Mail._populate_body
+    Returns:
+        sms (SMS Instance): - None if not have minimun fields required
+                     - SMS instance:
+                        - error_code is None then build was successfully
+                        - with error_code fail with data to populate, token not founds or both
+        not_found_keys (array): not found keys in body
+        not_found_args (array): not found replacement params
+    """
+    @classmethod
+    def build(self, sms_class = None, entity_class = None, extra_filters = [] ,sms_fields = {}, populate_values = {}, populate_body_method = None):
+        body = None
+        nf_keys = []
+        nf_args = []
+        sms = None
+
+        if len(['body', 'number_from', 'number_to'] -  sms_fields.keys()) == 0:
+            body, nf_keys, nf_args = populate_body_method(
+                entity_class,
+                sms_fields.get('body'),
+                extra_filters,
+                **populate_values
+            )
+
+            parser = MyHTMLParser()
+            parser.feed(body)
+            sms_fields['body'] = parser.get_plain_text()
+
+            sms = sms_class(
+                **sms_fields
+            )
+
+            if len(nf_keys) > 0 and len(nf_args) == 0:
+                sms.error_code = sms_class.ERROR_KEYS
+                sms.error_detail = ",".join(nf_keys)
+            if len(nf_args) > 0 and len(nf_keys) == 0:
+                sms.error_code = sms_class.ERROR_POPULATE
+                sms.error_detail = ",".join(nf_args)
+            if len(nf_args) > 0 and len(nf_keys) > 0:
+                sms.error_code = sms_class.ERROR_POPULATE_KEYS
+                sms.error_detail = ",".join(nf_args+nf_keys)
+
+            sms.save()
+
+        return sms, nf_keys, nf_args
 
     def send(self):
         if settings.ENABLE_SMS:
