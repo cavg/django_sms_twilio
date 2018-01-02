@@ -7,13 +7,14 @@ name = "pypi"
 
 [packages]
 
+django = "==1.11"
 django-extensions = "==1.9.8"
 twilio = "==6.5.0"
 coverage = "==4.4.1"
 django-debug-toolbar = "*"
 ipdb = "==0.10.3"
 "49bbba5" = {path = "./sms/dependencies/django_toolbox-0.3.1.tar.gz"}
-django = "==1.11"
+
 
 
 [dev-packages]
