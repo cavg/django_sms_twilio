@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "9c6a362b30c8accf6ce883ae82308d5d0e9e6b221de4a3ebab48fc61b1a9009f"
+            "sha256": "4a5e0faa4392969ee6d533471faa01d782393aeb4ca3d09d2d708943a51fc27e"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -110,10 +110,10 @@
         },
         "django": {
             "hashes": [
-                "sha256:cbd3944599086518cdcf3235e90230c8b8a9c5476b20447ee57b313dba14f67a",
-                "sha256:3c5b070482df4f9e5750539dc1824d353729ee423fd410c579b8cd3dea5b0617"
+                "sha256:0120b3b60760fb0617848b58aaa9702c0bf963320ed472f0879c5c55ab75b64a",
+                "sha256:b6f3b864944276b4fd1d099952112696558f78b77b39188ac92b6c5e80152c30"
             ],
-            "version": "==1.11.2"
+            "version": "==1.11"
         },
         "django-debug-toolbar": {
             "hashes": [
@@ -124,10 +124,10 @@
         },
         "django-extensions": {
             "hashes": [
-                "sha256:a6b97ec77657e4fd43d508d6a134c799f188e868717f7499d05213b4669b44b6",
-                "sha256:3d028994db76b78bbc5adef7e48102d44fb70a33b34adaddcf8d4f85620453c1"
+                "sha256:7776b6c5f3807997c1459e96f4eed4af2b571fd6bebf61462242fa957166df30",
+                "sha256:9f1c314cfd4b974f03c5589f46f33051aa1d6b5a38cfb7f8824f59e9337768ae"
             ],
-            "version": "==1.7.9"
+            "version": "==1.9.8"
         },
         "idna": {
             "hashes": [
@@ -276,6 +276,14 @@
                 "sha256:4734b35eb02c20fecb573c53efe70c22d2cf5aa7f40b52e3c074ae4927d8242c"
             ],
             "version": "==6.5.0"
+        },
+        "typing": {
+            "hashes": [
+                "sha256:349b1f9c109c84b53ac79ac1d822eaa68fc91d63b321bd9392df15098f746f53",
+                "sha256:63a8255fe7c6269916baa440eb9b6a67139b0b97a01af632e7bd2842e1e02f15",
+                "sha256:d514bd84b284dd3e844f0305ac07511f097e325171f6cc4a20878d11ad771849"
+            ],
+            "version": "==3.6.2"
         },
         "urllib3": {
             "hashes": [
