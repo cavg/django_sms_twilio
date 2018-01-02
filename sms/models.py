@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from toolbox.html_parser import MyHTMLParser
 from twilio.rest import Client
@@ -37,11 +38,13 @@ class SMS(models.Model):
     ERROR_KEYS = 2
     ERROR_POPULATE_KEYS = 3
     ERROR_SMS = 4
+    ERROR_BODY_LENGTH = 5
     ERROR_CODE_CHOICES = (
         (ERROR_POPULATE, 'Error en datos de reemplazos'),
         (ERROR_KEYS, 'Error en valores de reemplazos'),
         (ERROR_POPULATE_KEYS, 'Error en valores de reemplazos y datos'),
-        (ERROR_SMS, 'Error servicio de envió de sms')
+        (ERROR_SMS, 'Error servicio de envió de sms'),
+        (ERROR_BODY_LENGTH, 'Error el texto no puede superar los 1600 caracteres')
     )
     body = models.TextField(max_length=1600, blank=False, null=False)
     number_from = models.CharField(max_length=15, blank=False, null=False)
@@ -50,6 +53,9 @@ class SMS(models.Model):
     sid = models.CharField(max_length=50, blank=True, null=False)
     error_code = models.IntegerField(choices=ERROR_CODE_CHOICES, default=None, null=True, blank=True)
     error_detail = models.CharField(max_length=200, blank = True, null = True)
+
+    deliver_at = models.DateTimeField(blank=True, null=True) # None means deliver immediately
+    sent_at = models.DateTimeField(blank=True, null=True)
 
     config = models.ForeignKey(ConfigSMS, on_delete=models.CASCADE, blank=False, null=False)
 
@@ -83,7 +89,7 @@ class SMS(models.Model):
         extra_filters (array<Q>): using to filter entity_class
         sms_fields (dict): All args required to obtain values to replace in sms body
         populate_values (dict): All args required to obtain values to replace in sms body
-        populate_body: (Method) Mail._populate_body
+        populate_body_method: (Method) Mail._populate_body
     Returns:
         sms (SMS Instance): - None if not have minimun fields required
                      - SMS instance:
@@ -129,7 +135,66 @@ class SMS(models.Model):
 
         return sms, nf_keys, nf_args
 
+    """ Used to try again populate sms if exists any error happened
+
+        Args:
+            sms_class (Class): Could be parent of SMS
+            entity_class (Class): Could be parent of MailTemplateEntity
+            extra_filters (array<Q>): using to filter entity_class
+            mail_fields (dict): All args required to obtain values to replace in email body
+            populate_body_method: (Method) Mail._populate_body
+        Returns:
+            boolean:
+                - True: If error is fixed, then error_code and error_details are setted to None
+                - False: If exist any populate error
+
+    """
+    def try_again_populate(self, sms_class = None, entity_class = None, extra_filters = [], mail_fields = {}, populate_values = {}, populate_body_method = None):
+        body, nf_keys, nf_args = populate_body_method(
+                entity_class,
+                mail_fields.get('body'),
+                extra_filters,
+                **populate_values
+        )
+
+        parser = MyHTMLParser()
+        parser.feed(body)
+        self.body = parser.get_plain_text()
+
+        if len(self.body) > 1600:
+            self.error_code = sms_class.ERROR_BODY_LENGTH
+        elif len(nf_keys) > 0 and len(nf_args) == 0:
+            self.error_code = sms_class.ERROR_KEYS
+            self.error_detail = ",".join(nf_keys)
+        elif len(nf_args) > 0 and len(nf_keys) == 0:
+            self.error_code = sms_class.ERROR_POPULATE
+            self.error_detail = ",".join(nf_args)
+        elif len(nf_args) > 0 and len(nf_keys) > 0:
+            self.error_code = sms_class.ERROR_POPULATE_KEYS
+            self.error_detail = ",".join(nf_args+nf_keys)
+        else:
+            self.error_code = None
+            self.error_detail = None
+
+        self.save()
+
+        return self.error_code is None
+
+
     def send(self):
+        if len(self.body) > 1600:
+            return False, "Msg are limited to 1600 characters"
+
+        if self.sent_at is not None:
+            return True, "Already sent"
+
+        if self.deliver_at is not None:
+            if self.deliver_at > timezone.now():
+                return False, "Mail scheduled"
+
+        if self.error_code is not None:
+            return False, "Mail with errors"
+
         if settings.ENABLE_SMS:
             with_quotes, detail = self._check_quota()
             if with_quotes:
@@ -150,6 +215,7 @@ class SMS(models.Model):
                     )
                 self.status = message.status
                 self.sid = message.sid
+                self.sent_at = timezone.now()
                 self.save()
                 if self.status == 'queued':
                     return True, None

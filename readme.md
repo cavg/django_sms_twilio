@@ -58,8 +58,13 @@ In debug mode, SMS are not sent using twilio to avoid charges.
 
 Changelog
 --------------
+##### 0.0.6
+* Prevent body greater than 1600 characters in send method
+* try again fix error populate with method SMS.try_again_populate
+* prevent send scheduled emails
+* prevent send again emails already sent
 
-#### 0.0.5 
+#### 0.0.5
 * Build SMS with populate body and html remove entities
 
 #### 0.0.4

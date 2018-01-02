@@ -2,7 +2,8 @@ Django APP that provide an integration with twilio SMS service.
 
 Tested on Django 1.11.2 and Python 3.6.1 \o/
 
-# Features
+Features
+----------
 
 * SMS sender through Twilio API
 * Callback status update for deliverd sms
@@ -10,7 +11,8 @@ Tested on Django 1.11.2 and Python 3.6.1 \o/
 * SID, Token twilio storaged in DB
 
 
-# Setup
+Setup
+------
 
 ## Environment vars required
 
@@ -33,8 +35,13 @@ Tested on Django 1.11.2 and Python 3.6.1 \o/
 
     SITE_URL = "."...
 
+## Dependencies
 
-## URL and settings
+Just `pipenv install`
+
+
+URL and settings
+-----------------
 
     url(r'^sms/', include('sms.urls')),
 
@@ -43,23 +50,31 @@ Tested on Django 1.11.2 and Python 3.6.1 \o/
         'sms.apps.SmsConfig',
     ]
 
-## Notes:
+Notes:
+---------
 
 In debug mode, SMS are not sent using twilio to avoid charges.
 
 
-## Changelog
+Changelog
+--------------
+##### 0.0.6
+* Prevent body greater than 1600 characters in send method
+* try again fix error populate with method SMS.try_again_populate
+* prevent send scheduled emails
+* prevent send again emails already sent
 
-#### 0.0.3
-* to delivery use sms.send() will check the quote limit automatically
-* method check_quota was deprecated
-* unlimit quote is valid if max_day or max_month are negative
+#### 0.0.5
+* Build SMS with populate body and html remove entities
 
 #### 0.0.4
 * Rename model from Quota to ConfigSMS
 * New feature: Save SID, TOKEN into DB
 * Associate SMS with config to get credentials and limits
 
-# Dependencies
+#### 0.0.3
+* to delivery use sms.send() will check the quote limit automatically
+* method check_quota was deprecated
+* unlimit quote is valid if max_day or max_month are negative
 
-`pipenv install`
+
