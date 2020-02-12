@@ -1,5 +1,5 @@
 twilio==6.5.0
 django-extensions==1.7.9
-django==1.11.2
+django==1.11.28
 coverage==4.4.1
 django-toolbox==0.3.1
